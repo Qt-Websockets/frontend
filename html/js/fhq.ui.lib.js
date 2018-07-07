@@ -19,6 +19,21 @@ fhq.ui.showModalDialog = function(obj) {
 	}
 }
 
+fhq.ui.playStopMusic = function(){
+	var status = $('#btnmenu_sound').attr('status');
+	if(status && status == 'playing'){
+		$('#btnmenu_sound').html('Play Sound');
+		$('#btnmenu_sound').attr({'status': 'paused'})
+		audio_night_thus.pause();
+	}else{
+		$('#btnmenu_sound').html('Stop Sound');
+		$('#btnmenu_sound').attr({'status': 'playing'})
+		audio_night_thus.play();
+	}
+	
+	
+}
+
 fhq.ui.showError = function(msg){
 	$('#modalInfoTitle').html(fhq.t('Error'));
 	$('#modalInfo').modal('show');
@@ -153,9 +168,7 @@ fhq.ui.updateMenu = function(){
 	$('#btnmenu_proposal_quest').html(fhq.t('Proposal Quest'));
 	
 	$('#btnmenu_createnews').html(fhq.t('Create News'));
-	$('#btnmenu_createquest').html(fhq.t('Create Quest'));
 
-	$('#btnmenu_answerlist').html(fhq.t('Answer List'));
 	$('#btnmenu_serverinfo').html(fhq.t('Server Info'));
 	$('#btnmenu_serversettings').html(fhq.t('Server Settings'));
 	
@@ -348,8 +361,6 @@ fhq.ui.processParams = function() {
 	// admin api
 	fhq.ui.pageHandlers["create_news"] = fhq.ui.loadCreateNews;
 	fhq.ui.pageHandlers["server_info"] = fhq.ui.loadServerInfo;
-	fhq.ui.pageHandlers["answerlist"] = fhq.ui.loadAnswerList;	
-	fhq.ui.pageHandlers["new_quest"] = fhq.ui.loadCreateQuestForm;
 	fhq.ui.pageHandlers["edit_quest"] = fhq.ui.loadEditQuestForm;
 	fhq.ui.pageHandlers["chat"] = fhq.ui.loadChatPage;
 
@@ -688,60 +699,6 @@ fhq.ui.loadServerInfo = function(){
 	}).fail(function(r){
 		console.error(r);
 		el.append(r.error);
-	})
-}
-
-fhq.ui.loadAnswerList = function(){
-	fhq.ui.hideLoading();
-	var onpage = 8;
-	if(fhq.containsPageParam("onpage")){
-		onpage = parseInt(fhq.pageParams['onpage'], 10);
-	}
-
-	var page = 0;
-	if(fhq.containsPageParam("page")){
-		page = parseInt(fhq.pageParams['page'], 10);
-	}
-	
-	window.fhq.changeLocationState({'answerlist': '', 'onpage': onpage, 'page': page});
-	$("#content_page").html('<div class="fhq0057"></div>');
-	$('.fhq0057').append('<h1>' + fhq.t('Answer List') + '</h1>');
-	$('.fhq0057').append('<div class="fhq0063"></div>');
-	$('.fhq0057').append('<div class="fhq0058"></div>');
-	$('.fhq0058').append(fhq.ui.render([{
-		'c': 'fhq0059',
-		'r': [
-			{ 'c': 'fhq0061', 'r': fhq.t('Date Time')},
-			{ 'c': 'fhq0061', 'r': fhq.t('Quest')},
-			{ 'c': 'fhq0061', 'r': fhq.t('Answer')},
-			{ 'c': 'fhq0061', 'r': fhq.t('Passed')},
-			{ 'c': 'fhq0061', 'r': fhq.t('User')},
-		]
-	}]));
-
-	fhq.ws.answerlist({'onpage': onpage, 'page': page}).done(function(r){
-		$('.fhq0063').append(fhq.ui.paginator(0, r.count, r.onpage, r.page));
-		
-		for(var i in r.data){
-			var uqa = r.data[i];
-			$('.fhq0058').append(fhq.ui.render([{
-				'c': 'fhq0059' + (uqa.passed == 'Yes' ? ' fhq0062' : ''),
-				'r': [
-					{ 'c': 'fhq0061', 'r': uqa.dt},
-					{ 'c': 'fhq0061', 'r': uqa.quest.subject + ' / Quest ' + uqa.quest.id + '<br>' + uqa.quest.name + ' (+' + uqa.quest.score + ')' },
-					{ 'c': 'fhq0061', 'r': 'User: ' + uqa.user_answer + '<br> Quest: ' + uqa.quest_answer + '<br> Levenshtein: ' + uqa.levenshtein },
-					{ 'c': 'fhq0061', 'r': uqa.passed },
-					{ 'c': 'fhq0061', 'r': fhq.ui.makeUserIcon(uqa.user.id, uqa.user.logo, uqa.user.nick)},
-				]
-			}]));
-			
-			/*$('.fhq0058').append('<div class="fhq0059">'
-			+ i + ' => ' + r.data[i]
-			+ '</div>')*/
-		}
-	}).fail(function(r){
-		console.error(r);
-		$('.fhq0057').append(r.error);
 	})
 }
 
@@ -1278,17 +1235,6 @@ fhq.ui.loadUserProfile = function(userid) {
 				});
 			});
 		}
-
-
-		if(fhq.isAdmin()){
-			/*var c = '<div class="fhq0051">';
-			c += '<div class="fhqbtn" id="quest_edit">' + fhq.t('Edit') + '</div>';
-			c += '<div class="fhqbtn" id="quest_delete">' + fhq.t('Delete') + '</div>';
-			c += '<div class="fhqbtn" id="quest_export">' + fhq.t('Export') + '</div>';
-			c += '<div class="fhqbtn" id="quest_report">' + fhq.t('Report an error') + '</div>';
-			c += '</div>'
-			el.append(c);*/
-		}
 		
 		fhq.ws.user_skills({userid: user.data.id}).done(function(r){
 			
@@ -1575,153 +1521,6 @@ window.fhq.ui.updateQuests = function(){
 	});
 }
 
-// TODO redesign
-function createQuestRow(name, value) {
-	return '<div class="quest_info_row">\n'
-	+ '\t<div class="quest_info_param">' + name + '</div>\n'
-	+ '\t<div class="quest_info_value">' + value + '</div>\n'
-	+ '</div>\n';
-
-}
-
-
-fhq.ui.loadCreateQuestForm = function(){
-	window.fhq.changeLocationState({'new_quest':''});
-	fhq.ui.hideLoading();
-	var el = $('#content_page');
-	el.html('');
-	el.html(''
-		+ '<div class="card">'
-		+ '		<div class="card-header">' + fhq.t('Create Quest') + '</div>'
-		+ '		<div class="card-body">'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_quest_uuid" class="col-sm-2 col-form-label">' + fhq.t('UUID') + '</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<input type="text" class="form-control" value="' + guid() + '" id="newquest_quest_uuid">'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_gameid" class="col-sm-2 col-form-label">' + fhq.t('Game') + '</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<select class="form-control" id="newquest_gameid"></select>'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_name" class="col-sm-2 col-form-label">' + fhq.t('Name') + '</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<input type="text" class="form-control" value="" id="newquest_name">'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_text" class="col-sm-2 col-form-label">' + fhq.t('Text') + ' (Use markdown format)</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<textarea type="text" class="form-control" style="height: 150px" value="" id="newquest_text"></textarea>'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_score" class="col-sm-2 col-form-label">' + fhq.t('Score') + ' (+)</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<input type="number" class="form-control" id="newquest_score">'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_subject" class="col-sm-2 col-form-label">' + fhq.t('Subject') + '</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<select class="form-control" value="" id="newquest_subject">'
-		+ '						<option value="trivia">Trivia</option>'
-		+ '						<option value="hashes">Hashes</option>'
-		+ '						<option value="stego">Stego</option>'
-		+ '						<option value="reverse">Reverse</option>'
-		+ '						<option value="recon">Recon</option>'
-		+ '						<option value="crypto">Crypto</option>'
-		+ '						<option value="forensics">Forensics</option>'
-		+ '						<option value="network">Network</option>'
-		+ '						<option value="web">Web</option>'
-		+ '						<option value="ppc">PPC</option>'
-		+ '						<option value="admin">Admin</option>'
-		+ '						<option value="enjoy">Enjoy</option>'
-		+ '						<option value="unknown">Unknown</option>'
-		+ '					</select>'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_answer" class="col-sm-2 col-form-label">' + fhq.t('Answer') + '</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<input type="text" class="form-control" id="newquest_answer" value="">'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_answerformat" class="col-sm-2 col-form-label">' + fhq.t('Answer format') + '</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<input type="text" class="form-control" id="newquest_answerformat" value="">'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_author" class="col-sm-2 col-form-label">' + fhq.t('Author') + '</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<input type="text" class="form-control" value="" id="newquest_author">'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_copyright" class="col-sm-2 col-form-label">' + fhq.t('Copyright') + '</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<input type="text" class="form-control" value="" id="newquest_copyright">'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_state" class="col-sm-2 col-form-label">' + fhq.t('State') + '</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<select class="form-control" value="" id="newquest_state">'
-		+ '						<option value="open">Open</option>'
-		+ '						<option value="closed">Closed</option>'
-		+ '						<option value="broken">Broken</option>'
-		+ '					</select>'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label for="newquest_description_state" class="col-sm-2 col-form-label">' + fhq.t('Description State') + '</label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<textarea type="text" class="form-control" style="height: 150px" value="" id="newquest_description_state"></textarea>'
-		+ '				</div>'
-		+ '			</div>'
-		+ '			<div class="form-group row">'
-		+ '				<label class="col-sm-2 col-form-label"></label>'
-		+ ' 			<div class="col-sm-10">'
-		+ '					<div class="btn btn-danger" onclick="fhq.ui.createQuest();">Create</div>'
-		+ '				</div>'
-		+ '			</div>'
-		+ '		</div>'
-		+ '</div>'
-	);
-	
-	fhq.ws.games().done(function(r){
-		for(var i in r.data){
-			$('#newquest_gameid').append('<option value="' + r.data[i]["id"] + '">' + r.data[i]["title"] + '</option>');
-		}
-	})
-}
-
-fhq.ui.createQuest = function() {
-	var params = {};
-	params["uuid"] = $("#newquest_quest_uuid").val();
-	params["gameid"] = parseInt($("#newquest_gameid").val(),10);
-	params["name"] = $("#newquest_name").val();
-	params["text"] = $("#newquest_text").val();
-	params["score"] = parseInt($("#newquest_score").val(),10);
-	params["subject"] = $("#newquest_subject").val();
-	params["copyright"] = $("#newquest_copyright").val();
-	params["author"] = $("#newquest_author").val();
-	params["answer"] = $("#newquest_answer").val();
-	params["answer_format"] = $("#newquest_answerformat").val();
-	params["state"] = $("#newquest_state").val();
-	params["description_state"] = $("#newquest_description_state").val();
-
-	fhq.ws.createquest(params).done(function(r){
-		fhq.ui.loadQuest(r.questid);
-	}).fail(function(r){
-		fhq.ui.showError(r.error);
-	});
-};
 
 fhq.ui.loadProposalQuestForm = function(){
 	window.fhq.changeLocationState({'proposal_quest':''});
@@ -1849,20 +1648,6 @@ fhq.ui.proposalQuest = function() {
 		fhq.ui.showError(r.error);
 	});
 };
-
-
-fhq.ui.deleteQuest = function(id){
-	if (!confirm("Are you sure that wand remove this quest?"))
-		return;
-
-	var params = {};
-	params.questid = parseInt(id,10);
-	fhq.ws.quest_delete(params).done(function(r){
-		fhq.ui.loadQuestsBySubject(r.subject);
-	}).fail(function(r){
-		fhq.ui.showError(r.error);
-	});
-}
 
 fhq.ui.loadEditQuestForm = function(questid){
 	window.fhq.changeLocationState({'edit_quest':questid});
@@ -2127,7 +1912,6 @@ fhq.ui.loadStatSubjectsQuests = function(){
 		$('.open-subject').unbind().bind('click', function(){
 			if(!window.opened_subject){
 				var subject = $(this).attr('subject');
-				audio_selected_subject.play();
 				// $('.open-subject').html('<i class="fa fa-chevron-circle-left"></i>   ' + fhq.t('Open Subjects'));
 				fhq.ui.animateSubjects(subject);
 				fhq.ui.loadQuestsBySubject(subject, true);
@@ -2327,8 +2111,6 @@ fhq.ui.renderQuestAppendButtons = function(el, q){
 	if(fhq.isAdmin()){
 		$('#quest_btns').append(' '
 			+ '<div class="btn btn-info" questid="' + q.id + '" id="quest_edit">' + fhq.t('Edit') + '</div> '
-			+ '<div class="btn btn-info" questid="' + q.id + '" id="quest_export">' + fhq.t('Export') + '</div> '
-			+ '<div class="btn btn-danger" questid="' + q.id + '" id="quest_delete">' + fhq.t('Delete') + '</div> '
 		)
 	}
 
@@ -2341,17 +2123,9 @@ fhq.ui.renderQuestAppendButtons = function(el, q){
 			+ 'Comment:\n'
 		);
 	});
-
-	$('#quest_delete').unbind().bind('click', function(){
-		fhq.ui.deleteQuest(q.id);
-	});
 	
 	$('#quest_edit').unbind().bind('click', function(){
 		fhq.ui.loadEditQuestForm(q.id);
-	})
-
-	$('#quest_export').unbind().bind('click', function(){
-		fhqgui.exportQuest(q.id);
 	})
 }
 
@@ -2499,21 +2273,18 @@ fhq.ui.loadQuest = function(id){
 
 		fhq.changeLocationState({quest: q.id});
 		el.html('');
+		
 		el.append(''
-			+ '<div class="fhq0010">'
-			+ '	<div class="fhq0012">'
-			+ '		<div class="fhq0011"></div>'
-			+ '		<div class="fhq0013">'
-			+ ' 		<a href="?subject=' + q.subject + '">' + fhq.ui.capitalizeFirstLetter(q.subject) + '</a> / <a href="?quest=' + q.id + '">Quest ' + q.id + '</a>' 
-			+ ' 		(' + (q.completed ? fhq.t('Quest completed') : fhq.t('Quest open')) + ')'
-			+ '			<div class="fhq0014">' + q.name + ' (+' + q.score + ')</div>'
+			+ '<div class="card alert-secondary">'
+			+ '		<div class="card-body card-left-img text-center" id="quest_head" style="background-image: url(' + g.logo + ');">'
+			+ '			<div class="card-text">'
+			+ '				<a href="?subject=' + q.subject + '">' + fhq.ui.capitalizeFirstLetter(q.subject) + '</a> / '
+			+ '				<a href="?quest=' + q.id + '">Quest ' + q.id + '</a>'
+			+ '				<div class="card-subtitle mb-2 text-muted d-inline">(' + (q.completed ? fhq.t('Quest completed') : fhq.t('Quest open')) + ')</div>'
+			+ '			</div>'
+			+ '			<h2 class="card-title">' + q.name + ' (+' + q.score + ')</h2>'
 			+ '		</div>'
-			+ '	</div>'
-			+ '</div>');
-
-		$('.fhq0011').css({ // game logo
-			'background-image': 'url(' + g.logo + ')'
-		});
+			+ '</div><br>');
 
 		fhq.ui.renderQuestAppendButtons(el, q);
 		fhq.ui.renderQuestDetails(el, q);
@@ -2699,7 +2470,8 @@ window.fhq.ui.updateQuestStatistics = function(questid){
 		console.error(err);
 		fhq.ui.hideLoading();
 	}).done(function(response){
-		var q = response.data;
+		var q = response;
+		
 		// quest_chart
 		var options = {
 			segmentShowStroke : true,
@@ -2712,6 +2484,7 @@ window.fhq.ui.updateQuestStatistics = function(questid){
 			animateScale : false,
 			legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<segments.length; i++){%><li><span style=\"background-color:<%=segments[i].fillColor%>\"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><%}%></ul>"
 		};
+		
 		var data = [
 			{
 				value: q.solved,

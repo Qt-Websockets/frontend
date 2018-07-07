@@ -4,4 +4,6 @@
 
 html/files/classbook/*.md
 node_modules/*
-package-lock.json
+dist/*
+src/admin/js/.fhq.admin.users.js.swp
+npm-debug.log

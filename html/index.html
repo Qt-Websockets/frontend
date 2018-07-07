@@ -47,9 +47,9 @@
 		<script type="text/javascript" src="js/fhq.base.js?v=20180317"></script>
 		<script type="text/javascript" src="js/fhq.localization.js?v=20180317"></script>
 		<script type="text/javascript" src="js/fhq.js?v=20180317"></script>
-		<script type="text/javascript" src="js/fhq.ws.config.js?v=20180317"></script>
-		<script type="text/javascript" src="js/fhq.ws.js?v=20180317"></script>
-		<script type="text/javascript" src="js/fhq.ui.lib.js?v=20180317"></script>
+		<script type="text/javascript" src="js/fhq.ws.config.js?v=20180328"></script>
+		<script type="text/javascript" src="js/fhq.ws.js?v=20180328"></script>
+		<script type="text/javascript" src="js/fhq.ui.lib.js?v=20180329"></script>
 		<script type="text/javascript" src="js/tools/fhq.tools.js?ver=2"></script>
 		<script type="text/javascript" src="js/fhq_modal_dialog.js?ver=1"></script>
 		<script type="text/javascript">
@@ -130,7 +130,7 @@
 							<!-- div class="dropdown-item" id="btnmenu_tools" onclick="fhq.ui.loadTools();">Tools</div -->
 							<div class="dropdown-item" id="btnmenu_classbook" onclick="fhq.ui.loadClassbook(0);">Classbook</div>
 							<div class="dropdown-item" id="btnmenu_apidocs" onclick="fhq.ui.loadApiPage();">FreeHackQuest API</div>
-							<div class="dropdown-item" id="btnmenu_sound" onclick="audio_night_thus.play();">Sound</div>
+							<div class="dropdown-item" id="btnmenu_sound" onclick="fhq.ui.playStopMusic()">Play Sound</div>
 
 							<div class="dropdown-divider"></div>
 							<div class="dropdown-item" id="btnmenu_newfeedback" onclick="fhq.ui.loadFeedbackAdd()">New Feedback</div>
@@ -138,10 +138,8 @@
 							
 							<div class="dropdown-divider admin-menu"></div>
 							<div class="dropdown-item admin-menu" id="btnmenu_createnews" onclick="fhq.ui.loadCreateNews();">Create News</div>
-							<div class="dropdown-item admin-menu" id="btnmenu_createquest" onclick="fhq.ui.loadCreateQuestForm();">Create Quest</div>
 							
 							<div class="dropdown-divider admin-menu"></div>
-							<div class="dropdown-item admin-menu" id="btnmenu_answerlist" onclick="fhq.ui.loadAnswerList()">Answer List</div>
 							<div class="dropdown-item admin-menu" id="btnmenu_serverinfo" onclick="fhq.ui.loadServerInfo()">Server Info</div>
 						</div>
 					</li>
@@ -273,7 +271,6 @@
 			</div>
 		</div>
 		<script>
-			var audio_selected_subject = new Audio('selected_subject.mp3');
 			var audio_night_thus = new Audio('night_thus.mp3');
 			audio_night_thus.addEventListener('ended', function() {
 				this.currentTime = 0;

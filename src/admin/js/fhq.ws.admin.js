@@ -77,7 +77,7 @@ window.fhq.ws.onconnect = function(){
 
 window.fhq.ws.initWebsocket = function(){
 
-	fhq.ws.socket = new WebSocket(fhq.ws.protocol + "//" + fhq.ws.hostname + ":" + fhq.ws.port + "/");
+	fhq.ws.socket = new WebSocket(fhq.ws.base_url);
 	// fhq.ws.socket = new WebSocket(protocol + "//freehackquest.com:" + port + "/");
 	window.fhq.ws.socket.onopen = function() {
 		console.log('WS Opened');
@@ -513,6 +513,12 @@ fhq.ws.user_change_password = function(data){
 fhq.ws.user_create = function(data){
 	data = data || {};
 	data.cmd = 'user_create';
+	return fhq.ws.send(data);
+}
+
+fhq.ws.user_delete = function(data){
+	data = data || {};
+	data.cmd = 'user_delete';
 	return fhq.ws.send(data);
 }
 
